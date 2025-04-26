@@ -70,11 +70,11 @@ builder.Services.AddSwaggerGen(
     {
         c.SwaggerDoc("v1", new OpenApiInfo
         {
-            Title   = "BicasTeam.MoviGestion.API",
+            Title   = "LosTesters.MoviGestion.API",
             Version = "v1",
-            Description = "BicasTeam MoviGestion Platform API",
-            TermsOfService = new Uri("https://bicas-movigestion.com/tos"),
-            Contact = new OpenApiContact{ Name = "Bicas Team MoviGestion", Email = "movigestion@bicas.com" },
+            Description = "Los Testers MoviGestion Platform API",
+            TermsOfService = new Uri("https://testers-movigestion.com/tos"),
+            Contact = new OpenApiContact{ Name = "Los Testers MoviGestion", Email = "movigestion@testers.com" },
             License = new OpenApiLicense { Name = "Apache 2.0", Url = new Uri("https://www.apache.org/licenses/LICENSE-2.0.html")},
         });
     });
