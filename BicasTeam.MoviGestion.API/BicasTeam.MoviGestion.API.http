@@ -1,0 +1,6 @@
+@BicasTeam.MoviGestion.API_HostAddress = http://localhost:5102
+
+GET {{BicasTeam.MoviGestion.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
