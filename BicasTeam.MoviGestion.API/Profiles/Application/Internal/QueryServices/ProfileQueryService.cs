@@ -2,28 +2,44 @@
 using BicasTeam.MoviGestion.API.Profiles.Domain.Model.Queries;
 using BicasTeam.MoviGestion.API.Profiles.Domain.Repositories;
 using BicasTeam.MoviGestion.API.Profiles.Domain.Services;
+using BicasTeam.MoviGestion.API.Shared.Application.Security.Hashing;
 
 namespace BicasTeam.MoviGestion.API.Profiles.Application.Internal.QueryServices;
 
-public class ProfileQueryService(IProfileRepository profileRepository) : IProfileQueryService
+public class ProfileQueryService : IProfileQueryService
 {
+    private readonly IProfileRepository _profileRepository;
+    private readonly PasswordHasherService _hasher;
+
+    public ProfileQueryService(IProfileRepository profileRepository, PasswordHasherService hasher)
+    {
+        _profileRepository = profileRepository;
+        _hasher = hasher;
+    }
+
     public async Task<Profile?> Handle(GetProfileByIdQuery query)
     {
-        return await profileRepository.FindByIdAsync(query.Id);
+        return await _profileRepository.FindByIdAsync(query.Id);
     }
 
     public async Task<IEnumerable<Profile>> Handle(GetAllProfilesQuery query)
     {
-        return await profileRepository.ListAsync();
+        return await _profileRepository.ListAsync();
     }
 
     public async Task<Profile?> Handle(GetProfileByEmailQuery query)
     {
-        return await profileRepository.FindProfileByEmailAsync(query.Email);
+        return await _profileRepository.FindProfileByEmailAsync(query.Email);
     }
 
     public async Task<Profile?> Handle(GetProfileByEmailAndPasswordQuery query)
     {
-        return await profileRepository.FindProfileByEmailAndPasswordAsync(query.Email, query.Password);
+        // Busca solo por email
+        var profile = await _profileRepository.FindProfileByEmailAsync(query.Email);
+        if (profile == null) return null;
+
+        // Compara la contraseña hasheada
+        var isValid = _hasher.VerifyPassword(profile.Password, query.Password);
+        return isValid ? profile : null;
     }
 }

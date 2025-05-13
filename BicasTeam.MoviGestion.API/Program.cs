@@ -32,6 +32,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using BicasTeam.MoviGestion.API.Shared.Application.Security.Tokens;
+using BicasTeam.MoviGestion.API.Shared.Application.Security.Hashing;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,7 +75,25 @@ builder.Services.AddSwaggerGen(c =>
         Contact = new OpenApiContact { Name = "Los Testers MoviGestion", Email = "movigestion@testers.com" },
         License = new OpenApiLicense { Name = "Apache 2.0", Url = new Uri("https://www.apache.org/licenses/LICENSE-2.0.html") },
     });
+
+    // JWT Configuration for Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Pega tu token JWT aquí. Formato requerido: **Bearer {token}**. La palabra 'Bearer ' ya viene incluida, solo agrega el token."
+    });
+
+
+    c.OperationFilter<AuthorizeCheckOperationFilter>();
+
+
+    
 });
+
 
 // Add CORS Policy
 builder.Services.AddCors(options =>
@@ -106,6 +128,28 @@ builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
 builder.Services.AddScoped<IProfileCommandService, ProfileCommandService>();
 builder.Services.AddScoped<IProfileQueryService, ProfileQueryService>();
 
+// JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var jwtSettings = builder.Configuration.GetSection("Jwt");
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]))
+        };
+    });
+builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<PasswordHasherService>();
+
+builder.Services.AddAuthorization();
+
+
 var app = builder.Build();
 
 // ?? Removed EnsureCreated block because RDS can't create database from app directly
@@ -127,12 +171,15 @@ else
 }
 
 // Add CORS Middleware with AllowAllPolicy
-app.UseCors("AllowAllPolicy");
-
 app.UseHttpsRedirection();
 
+app.UseCors("AllowAllPolicy");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseRouting();
 
 app.Run();
