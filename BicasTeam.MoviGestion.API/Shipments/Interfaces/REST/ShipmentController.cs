@@ -1,53 +1,93 @@
-﻿using BicasTeam.MoviGestion.API.Shipments.Domain.Model.Queries;
+﻿using BicasTeam.MoviGestion.API.Shipments.Domain.Model.Commands;
+using BicasTeam.MoviGestion.API.Shipments.Domain.Model.Queries;
 using BicasTeam.MoviGestion.API.Shipments.Domain.Services;
 using BicasTeam.MoviGestion.API.Shipments.Interfaces.REST.Resources;
 using BicasTeam.MoviGestion.API.Shipments.Interfaces.REST.Transform;
+using BicasTeam.MoviGestion.API.Shared.Infrastructure.Persistence.EFC.Configuration;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BicasTeam.MoviGestion.API.Shipments.Interfaces.REST;
 
 [ApiController]
-[Route("/[controller]")]
+[Route("api/v1/shipments")]
+[Authorize]
 public class ShipmentController(
     IShipmentCommandService shipmentCommandService,
-    IShipmentQueryService shipmentQueryService
-): ControllerBase
+    IShipmentQueryService shipmentQueryService,
+    AppDbContext context
+) : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult> CreateShipment([FromBody] CreateShipmentResource resource)
     {
+        var userId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+        var userType = User.FindFirst("type")?.Value ?? string.Empty;
 
-        var createShipmentCommand = CreateShipmentCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var result = await shipmentCommandService.Handle(createShipmentCommand);
+        if (userType == "TRANSPORTISTA")
+        {
+            var isAssigned = await context.VehicleAssignments.AnyAsync(a =>
+                a.VehicleId == resource.VehicleId &&
+                a.TransporterId == userId &&
+                (!a.EndDate.HasValue || a.EndDate >= DateTime.UtcNow)
+            );
+
+            if (!isAssigned)
+                return StatusCode(StatusCodes.Status403Forbidden, "Este vehículo no está asignado al usuario actual o la asignación expiró.");
+        }
+
+        var command = new CreateShipmentCommand(
+            resource.Destiny,
+            resource.Description,
+            userId,
+            resource.VehicleId,
+            resource.Status
+        );
+
+        var result = await shipmentCommandService.Handle(command);
         if (result is null) return BadRequest();
-        return CreatedAtAction(nameof(GetShipmentById), new { id = result.Id}, ShipmentResourceFromEntityAssembler.ToResourceFromEntity(result));
+        return CreatedAtAction(nameof(GetShipmentById), new { id = result.Id }, ShipmentResourceFromEntityAssembler.ToResourceFromEntity(result));
     }
-    
+
     [HttpGet("{id}")]
     public async Task<ActionResult> GetShipmentById(int id)
     {
-        var getShipmentByIdQuery = new GetShipmentByIdQuery(id);
-        var result = await shipmentQueryService.Handle(getShipmentByIdQuery);
+        var query = new GetShipmentByIdQuery(id);
+        var result = await shipmentQueryService.Handle(query);
         if (result is null) return NotFound();
-        var resource = ShipmentResourceFromEntityAssembler.ToResourceFromEntity(result);
-        return Ok(resource);
+        return Ok(ShipmentResourceFromEntityAssembler.ToResourceFromEntity(result));
     }
-    
-    [HttpGet("users/{userId}")]
-    public async Task<ActionResult> GetShipmentByUserId(int userId)
+
+    [HttpGet("manager/my")]
+    public async Task<ActionResult> GetMyShipments()
     {
-        var getAllShipmentByUserId = new GetShipmentByUserIdQuery(userId);
-        var shipments = await shipmentQueryService.Handle(getAllShipmentByUserId);
-        var resources = shipments.Select(ShipmentResourceFromEntityAssembler.ToResourceFromEntity);
+        var userId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+        var query = new GetShipmentByUserIdQuery(userId);
+        var result = await shipmentQueryService.Handle(query);
+        var resources = result.Select(ShipmentResourceFromEntityAssembler.ToResourceFromEntity);
         return Ok(resources);
     }
-    
-    [HttpGet]
-    public async Task<ActionResult> GetAllReports()
+
+    [HttpGet("drivers/my-assigned")]
+    public async Task<ActionResult> GetMyAssignedShipments()
     {
-        var getAllShipmentsQuery = new GetAllShipmentsQuery();
-        var shipments = await shipmentQueryService.Handle(getAllShipmentsQuery);
-        var resources = shipments.Select(ShipmentResourceFromEntityAssembler.ToResourceFromEntity);
+        var userId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+        var query = new GetShipmentByTransporterIdQuery(userId);
+        var result = await shipmentQueryService.Handle(query);
+        var resources = result.Select(ShipmentResourceFromEntityAssembler.ToResourceFromEntity);
+        return Ok(resources);
+    }
+
+    [HttpGet]
+    public async Task<ActionResult> GetAllShipments(
+        [FromQuery] string? status,
+        [FromQuery] DateTime? startDate,
+        [FromQuery] DateTime? endDate)
+    {
+        var query = new GetAllShipmentsQuery(status, startDate, endDate);
+        var result = await shipmentQueryService.Handle(query);
+        var resources = result.Select(ShipmentResourceFromEntityAssembler.ToResourceFromEntity);
         return Ok(resources);
     }
 }

@@ -5,6 +5,20 @@ namespace BicasTeam.MoviGestion.API.Shipments.Interfaces.REST.Transform;
 
 public class ShipmentResourceFromEntityAssembler
 {
-    public static ShipmentResource ToResourceFromEntity(Shipment entity) => new ShipmentResource(entity.Id, entity.UserId, entity.Destiny, 
-        entity.Description, entity.CreatedAt, entity.Status);
+    public static ShipmentResource ToResourceFromEntity(Shipment entity)
+    {
+        return new ShipmentResource(
+            entity.Id,
+            entity.Destiny,
+            entity.Description,
+            entity.Status,
+            entity.CreatedAt,
+            entity.VehicleId,
+            entity.Vehicle?.Model,
+            entity.Vehicle?.LicensePlate,
+            entity.Vehicle?.IdTransportista
+        );
+    }
+
+
 }

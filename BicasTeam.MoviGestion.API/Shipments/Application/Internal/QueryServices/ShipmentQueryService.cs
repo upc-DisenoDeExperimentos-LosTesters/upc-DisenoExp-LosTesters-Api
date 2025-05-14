@@ -14,11 +14,18 @@ public class ShipmentQueryService(IShipmentRepository shipmentRepository) : IShi
 
     public async Task<IEnumerable<Shipment>> Handle(GetAllShipmentsQuery query)
     {
-        return await shipmentRepository.ListAsync();
+        return await shipmentRepository.FilteredListAsync(query.Status, query.StartDate, query.EndDate);
     }
+
 
     public async Task<IEnumerable<Shipment>> Handle(GetShipmentByUserIdQuery query)
     {
         return await shipmentRepository.FindByUserIdAsync(query.UserId);
     }
+
+    public async Task<IEnumerable<Shipment>> Handle(GetShipmentByTransporterIdQuery query)
+    {
+        return await shipmentRepository.FindByTransporterIdAsync(query.TransporterId);
+    }
+
 }

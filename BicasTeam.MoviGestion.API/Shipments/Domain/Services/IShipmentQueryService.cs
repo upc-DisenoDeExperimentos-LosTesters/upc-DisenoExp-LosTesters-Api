@@ -8,4 +8,8 @@ public interface IShipmentQueryService
     Task<Shipment?> Handle(GetShipmentByIdQuery query);
     Task<IEnumerable<Shipment>> Handle(GetAllShipmentsQuery query);
     Task<IEnumerable<Shipment>> Handle(GetShipmentByUserIdQuery query);
+    Task<IEnumerable<Shipment>> Handle(GetShipmentByTransporterIdQuery query);
+
+
 }
+
