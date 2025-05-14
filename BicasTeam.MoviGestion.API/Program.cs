@@ -98,9 +98,13 @@ builder.Services.AddSwaggerGen(c =>
 // Add CORS Policy
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAllPolicy", policy => policy.AllowAnyOrigin()
-        .AllowAnyMethod()
-        .AllowAnyHeader());
+    options.AddPolicy("FrontendPolicy", policy =>
+        policy.WithOrigins(
+            "http://localhost:5173",
+            "https://lostester-mobigestion.web.app"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod());
 });
 
 // Dependency Injection
@@ -173,7 +177,7 @@ else
 // Add CORS Middleware with AllowAllPolicy
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAllPolicy");
+app.UseCors("FrontendPolicy");
 
 app.UseRouting();
 
