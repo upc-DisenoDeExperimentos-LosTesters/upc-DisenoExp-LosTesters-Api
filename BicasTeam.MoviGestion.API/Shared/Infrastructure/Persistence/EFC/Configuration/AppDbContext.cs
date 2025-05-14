@@ -56,5 +56,9 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         
         // Apply SnakeCase Naming Convention
         builder.UseSnakeCaseWithPluralizedTableNamingConvention();
+
+
     }
+    public DbSet<VehicleAssignment> VehicleAssignments { get; set; }
+
 }

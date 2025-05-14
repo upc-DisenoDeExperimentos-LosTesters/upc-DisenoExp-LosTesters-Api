@@ -27,6 +27,14 @@ public class ProfileCommandService : IProfileCommandService
     {
         try
         {
+            // Validar si ya existe un perfil con ese correo
+            var existingProfile = await _profileRepository.FindProfileByEmailAsync(command.Email);
+            if (existingProfile is not null)
+            {
+                // retornamos null si ya existe :v
+                return null;
+            }
+
             // hashing
             var hashedPassword = _hasher.HashPassword(command.Password);
 

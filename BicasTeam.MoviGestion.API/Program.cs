@@ -175,11 +175,11 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowAllPolicy");
 
+app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.UseRouting();
 
 app.Run();
