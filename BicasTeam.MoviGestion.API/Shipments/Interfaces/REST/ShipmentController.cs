@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+
+
 namespace BicasTeam.MoviGestion.API.Shipments.Interfaces.REST;
 
 [ApiController]
@@ -22,33 +24,33 @@ public class ShipmentController(
     [HttpPost]
     public async Task<ActionResult> CreateShipment([FromBody] CreateShipmentResource resource)
     {
-        var userId = int.Parse(User.FindFirst("id")?.Value ?? "0");
-        var userType = User.FindFirst("type")?.Value ?? string.Empty;
-
-        if (userType == "TRANSPORTISTA")
-        {
-            var isAssigned = await context.VehicleAssignments.AnyAsync(a =>
-                a.VehicleId == resource.VehicleId &&
-                a.TransporterId == userId &&
-                (!a.EndDate.HasValue || a.EndDate >= DateTime.UtcNow)
-            );
-
-            if (!isAssigned)
-                return StatusCode(StatusCodes.Status403Forbidden, "Este vehículo no está asignado al usuario actual o la asignación expiró.");
-        }
-
-        var command = new CreateShipmentCommand(
-            resource.Destiny,
-            resource.Description,
-            userId,
-            resource.VehicleId,
-            resource.Status
+        // Validación de asignación: que el vehículo esté asignado al transportista indicado
+        var isAssigned = await context.VehicleAssignments.AnyAsync(a =>
+            a.VehicleId == resource.VehicleId &&
+            a.TransporterId == resource.UserId &&
+            (!a.EndDate.HasValue || a.EndDate >= DateTime.UtcNow)
         );
+
+        if (!isAssigned)
+            return StatusCode(StatusCodes.Status403Forbidden,
+                "Este vehículo no está asignado al transportista indicado o la asignación expiró.");
+
+        // Crea el comando usando el UserId recibido directamente del body
+        var command = CreateShipmentCommandFromResourceAssembler.ToCommandFromResource(resource, resource.UserId);
 
         var result = await shipmentCommandService.Handle(command);
         if (result is null) return BadRequest();
-        return CreatedAtAction(nameof(GetShipmentById), new { id = result.Id }, ShipmentResourceFromEntityAssembler.ToResourceFromEntity(result));
+
+        return CreatedAtAction(nameof(GetShipmentById), new { id = result.Id },
+            ShipmentResourceFromEntityAssembler.ToResourceFromEntity(result));
     }
+
+
+
+
+
+
+
 
     [HttpGet("{id}")]
     public async Task<ActionResult> GetShipmentById(int id)
@@ -68,6 +70,7 @@ public class ShipmentController(
         var resources = result.Select(ShipmentResourceFromEntityAssembler.ToResourceFromEntity);
         return Ok(resources);
     }
+
 
     [HttpGet("drivers/my-assigned")]
     public async Task<ActionResult> GetMyAssignedShipments()

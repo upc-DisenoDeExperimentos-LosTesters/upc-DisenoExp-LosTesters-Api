@@ -9,6 +9,7 @@ public class ShipmentResourceFromEntityAssembler
     {
         return new ShipmentResource(
             entity.Id,
+            entity.UserId,
             entity.Destiny,
             entity.Description,
             entity.Status,

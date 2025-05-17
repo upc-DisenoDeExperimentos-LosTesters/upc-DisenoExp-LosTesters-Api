@@ -7,32 +7,29 @@ public partial class Shipment
 {
     public int Id { get; }
     public int UserId { get; private set; }
-    public string Destiny { get; set; }
-    public string Description { get; set; }
+    public string Destiny { get; private set; }
+    public string Description { get; private set; }
     public DateTime CreatedAt { get; private set; }
-    public string Status { get; set; }
+    public string Status { get; private set; }
     public int VehicleId { get; private set; }
     public Vehicle? Vehicle { get; set; }
 
-
-    protected Shipment()
+    // EF Core necesita un constructor sin parámetros, lo dejamos como privado
+    private Shipment()
     {
-        this.UserId = 0;
-        this.VehicleId = 0;
-        this.Destiny = string.Empty;
-        this.Description = string.Empty;
-        this.CreatedAt = DateTime.UtcNow;
-        this.Status = string.Empty;
+        Destiny = string.Empty;
+        Description = string.Empty;
+        Status = string.Empty;
+        CreatedAt = DateTime.UtcNow;
     }
 
     public Shipment(CreateShipmentCommand command)
     {
-        this.UserId = command.UserId;
-        this.VehicleId = command.VehicleId;
-        this.Destiny = command.Destiny;
-        this.Description = command.Description;
-        this.CreatedAt = DateTime.UtcNow;
-        this.Status = command.Status;
+        UserId = command.UserId;
+        VehicleId = command.VehicleId;
+        Destiny = command.Destiny;
+        Description = command.Description;
+        CreatedAt = DateTime.UtcNow;
+        Status = command.Status;
     }
-
 }

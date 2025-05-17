@@ -60,5 +60,7 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
 
     }
     public DbSet<VehicleAssignment> VehicleAssignments { get; set; }
+    public DbSet<Shipment> Shipments { get; set; }
+  
 
 }

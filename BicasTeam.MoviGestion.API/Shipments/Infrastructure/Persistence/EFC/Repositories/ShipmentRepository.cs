@@ -12,14 +12,20 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
     {
     }
 
-    public async Task<IEnumerable<Shipment>> FindByUserIdAsync(int userId)
+    public async Task<IEnumerable<Shipment>> FindByTransporterIdAsync(int transporterId)
     {
+        // 1. Obtener vehículos activos asignados a ese transportista  
+        var vehicleIds = await Context.VehicleAssignments
+            .Where(a => a.TransporterId == transporterId && (!a.EndDate.HasValue || a.EndDate >= DateTime.UtcNow))
+            .Select(a => a.VehicleId)
+            .ToListAsync();
+
+        // 2. Obtener los shipments que tengan esos vehículos asignados  
         return await Context.Set<Shipment>()
             .Include(s => s.Vehicle)
-            .Where(f => f.UserId == userId)
+            .Where(s => vehicleIds.Contains(s.VehicleId))
             .ToListAsync();
     }
-
 
     public async Task<IEnumerable<Shipment>> FilteredListAsync(string? status, DateTime? startDate, DateTime? endDate)
     {
@@ -39,19 +45,18 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             .ToListAsync();
     }
 
-    public async Task<Shipment?> FindByIdAsync(int id)
+    public new async Task<Shipment?> FindByIdAsync(int id) // Se utiliza 'new' para evitar el conflicto con el método heredado
     {
         return await Context.Set<Shipment>()
-            .Include(s => s.Vehicle) // necesario para obtener vehicleModel, plate, etc.
+            .Include(s => s.Vehicle) // necesario para obtener vehicleModel, plate, etc.  
             .FirstOrDefaultAsync(s => s.Id == id);
     }
 
-    public async Task<IEnumerable<Shipment>> FindByTransporterIdAsync(int transporterId)
+    public async Task<IEnumerable<Shipment>> FindByUserIdAsync(int userId) // Implementación del método faltante en la interfaz
     {
         return await Context.Set<Shipment>()
             .Include(s => s.Vehicle)
-            .Where(s => s.Vehicle != null && s.Vehicle.IdTransportista == transporterId)
+            .Where(s => s.UserId == userId)
             .ToListAsync();
     }
-
 }

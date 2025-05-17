@@ -2,6 +2,7 @@
 
 public record ShipmentResource(
     int Id,
+    int userId,
     string Destiny,
     string Description,
     string Status,
