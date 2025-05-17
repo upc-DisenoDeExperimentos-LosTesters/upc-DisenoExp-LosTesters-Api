@@ -54,7 +54,7 @@ public class ProfileController : ControllerBase
 
     // GET: api/v1/profile
     [HttpGet]
-    [Authorize(Roles = "Admin")] // Solo administradores pueden listar todos
+    [Authorize(Roles = "GERENTE")] // Solo administradores pueden listar todos
     public async Task<ActionResult> GetAllProfiles()
     {
         var query = new GetAllProfilesQuery();
