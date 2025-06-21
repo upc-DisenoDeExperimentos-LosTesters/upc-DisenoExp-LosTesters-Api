@@ -32,4 +32,31 @@ public class VehicleCommandService(IVehicleRepository vehicleRepository, IUnitOf
         return vehicle;
     }
 
+    public async Task<Vehicle?> Handle(UpdateVehicleCommand command)
+    {
+        var vehicle = await vehicleRepository.FindByIdAsync(command.Id);
+        if (vehicle == null) return null;
+
+        vehicle.Update(
+            command.LicensePlate,
+            command.Model,
+            command.SerialNumber,
+            command.IdPropietario,
+            command.IdTransportista
+        );
+
+        try
+        {
+            vehicleRepository.Update(vehicle);
+            await unitOfWork.CompleteAsync();
+            return vehicle;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+
+
 }

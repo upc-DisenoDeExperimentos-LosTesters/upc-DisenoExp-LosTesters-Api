@@ -15,5 +15,21 @@ public class VehicleRepository : BaseRepository<Vehicle>, IVehicleRepository
     {
         return await Context.Vehicles.AnyAsync(v => v.LicensePlate == licensePlate);
     }
+    public async Task<Vehicle?> FindByIdAsync(int id)
+    {
+        return await Context.Vehicles.FindAsync(id);
+    }
+
+    public void Update(Vehicle vehicle)
+    {
+        Context.Vehicles.Update(vehicle);
+    }
+
+    public void Remove(Vehicle vehicle)
+    {
+        Context.Vehicles.Remove(vehicle);
+    }
+
+
 
 }

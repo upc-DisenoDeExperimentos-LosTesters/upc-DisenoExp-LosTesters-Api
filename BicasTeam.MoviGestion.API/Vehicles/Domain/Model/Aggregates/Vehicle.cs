@@ -28,4 +28,14 @@ public class Vehicle
         IdPropietario = command.IdPropietario;  // Nuevo atributo
         IdTransportista = command.IdTransportista;  // Nuevo atributo
     }
+
+    public void Update(string licensePlate, string model, string serialNumber, int idPropietario, int idTransportista)
+    {
+        LicensePlate = licensePlate;
+        Model = model;
+        SerialNumber = serialNumber;
+        IdPropietario = idPropietario;
+        IdTransportista = idTransportista;
+    }
+
 }
