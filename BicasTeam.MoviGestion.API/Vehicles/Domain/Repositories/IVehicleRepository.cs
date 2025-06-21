@@ -5,5 +5,5 @@ namespace BicasTeam.MoviGestion.API.Vehicles.Domain.Repositories;
 
 public interface IVehicleRepository : IBaseRepository<Vehicle>
 {
-    
+    Task<bool> ExistsWithLicensePlateAsync(string licensePlate);
 }

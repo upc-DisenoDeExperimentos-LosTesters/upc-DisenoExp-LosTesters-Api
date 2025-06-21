@@ -90,4 +90,14 @@ public class ProfileController : ControllerBase
         var token = _jwtService.GenerateToken(profile.Id, profile.Email, profile.Type);
         return Ok(new { Token = token });
     }
+
+    [HttpGet("transportistas")]
+    public async Task<IActionResult> GetTransportistas()
+    {
+        var list = await _profileQueryService.GetTransportistasAsync();
+        return Ok(list.Select(p => new {
+            id = p.Id,
+            name = p.Name // o combinar nombre + apellido si lo tienes
+        }));
+    }
 }

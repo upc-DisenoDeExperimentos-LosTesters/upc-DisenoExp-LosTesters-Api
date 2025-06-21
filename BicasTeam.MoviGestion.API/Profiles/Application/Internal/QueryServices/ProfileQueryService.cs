@@ -3,6 +3,7 @@ using BicasTeam.MoviGestion.API.Profiles.Domain.Model.Queries;
 using BicasTeam.MoviGestion.API.Profiles.Domain.Repositories;
 using BicasTeam.MoviGestion.API.Profiles.Domain.Services;
 using BicasTeam.MoviGestion.API.Shared.Application.Security.Hashing;
+using BicasTeam.MoviGestion.API.Profiles.Infrastructure.Persistence.EFC.Repositories;
 
 namespace BicasTeam.MoviGestion.API.Profiles.Application.Internal.QueryServices;
 
@@ -42,4 +43,10 @@ public class ProfileQueryService : IProfileQueryService
         var isValid = _hasher.VerifyPassword(profile.Password, query.Password);
         return isValid ? profile : null;
     }
+
+    public async Task<IEnumerable<Profile>> GetTransportistasAsync()
+    {
+        return await _profileRepository.FindByRoleAsync("TRANSPORTISTA");
+    }
+
 }

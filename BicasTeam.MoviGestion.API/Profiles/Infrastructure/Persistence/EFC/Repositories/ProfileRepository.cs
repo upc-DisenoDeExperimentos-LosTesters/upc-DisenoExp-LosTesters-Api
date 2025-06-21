@@ -21,4 +21,12 @@ public class ProfileRepository : BaseRepository<Profile>, IProfileRepository
     {
         return await Context.Set<Profile>().Where(p => p.Email == email && p.Password == password).FirstOrDefaultAsync();
     }
+
+    public async Task<IEnumerable<Profile>> FindByRoleAsync(string role)
+    {
+        return await Context.Set<Profile>()
+            .Where(p => p.Type == role)
+            .ToListAsync();
+    }
+
 }

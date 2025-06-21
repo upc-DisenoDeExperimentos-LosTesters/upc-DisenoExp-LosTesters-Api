@@ -11,6 +11,14 @@ public class VehicleCommandService(IVehicleRepository vehicleRepository, IUnitOf
 {
     public async Task<Vehicle?> Handle(CreateVehicleCommand command)
     {
+        // Validar si la placa ya existe
+        var exists = await vehicleRepository.ExistsWithLicensePlateAsync(command.LicensePlate);
+        if (exists)
+        {
+            // Puedes lanzar una excepción o simplemente retornar null
+            throw new InvalidOperationException("Ya existe un vehículo con esa placa.");
+        }
+
         var vehicle = new Vehicle(command);
         try
         {
@@ -23,4 +31,5 @@ public class VehicleCommandService(IVehicleRepository vehicleRepository, IUnitOf
         }
         return vehicle;
     }
+
 }
