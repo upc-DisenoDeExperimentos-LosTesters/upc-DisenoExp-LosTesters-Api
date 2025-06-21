@@ -24,26 +24,21 @@ public class ShipmentController(
     [HttpPost]
     public async Task<ActionResult> CreateShipment([FromBody] CreateShipmentResource resource)
     {
-        // Validación de asignación: que el vehículo esté asignado al transportista indicado
-        var isAssigned = await context.VehicleAssignments.AnyAsync(a =>
-            a.VehicleId == resource.VehicleId &&
-            a.TransporterId == resource.UserId &&
-            (!a.EndDate.HasValue || a.EndDate >= DateTime.UtcNow)
-        );
+        // Validar que el vehículo pertenezca al usuario
+        var vehicle = await context.Vehicles.FindAsync(resource.VehicleId);
 
-        if (!isAssigned)
+        if (vehicle == null || vehicle.IdPropietario != resource.UserId)
             return StatusCode(StatusCodes.Status403Forbidden,
-                "Este vehículo no está asignado al transportista indicado o la asignación expiró.");
+                "Este vehículo no te pertenece o no existe.");
 
-        // Crea el comando usando el UserId recibido directamente del body
         var command = CreateShipmentCommandFromResourceAssembler.ToCommandFromResource(resource, resource.UserId);
-
         var result = await shipmentCommandService.Handle(command);
         if (result is null) return BadRequest();
 
         return CreatedAtAction(nameof(GetShipmentById), new { id = result.Id },
             ShipmentResourceFromEntityAssembler.ToResourceFromEntity(result));
     }
+
 
 
 
@@ -93,4 +88,29 @@ public class ShipmentController(
         var resources = result.Select(ShipmentResourceFromEntityAssembler.ToResourceFromEntity);
         return Ok(resources);
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteShipment(int id)
+    {
+        var shipment = await context.Shipments.FindAsync(id);
+        if (shipment == null) return NotFound("Envío no encontrado.");
+
+        context.Shipments.Remove(shipment);
+        await context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpPatch("{id}/status")]
+    public async Task<IActionResult> UpdateShipmentStatus(int id, [FromBody] UpdateShipmentStatusResource resource)
+    {
+        var shipment = await context.Shipments.FindAsync(id);
+        if (shipment == null) return NotFound("Envío no encontrado.");
+
+        shipment.GetType().GetProperty("Status")?.SetValue(shipment, resource.Status);
+        await context.SaveChangesAsync();
+
+        return Ok(ShipmentResourceFromEntityAssembler.ToResourceFromEntity(shipment));
+    }
+
+
 }
